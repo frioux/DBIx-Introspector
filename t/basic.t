@@ -12,27 +12,42 @@ test basic => sub {
 
    my $d = DBIx::Introspector->new();
 
-   my $dbh = DBI->connect($self->dsn);
+   my $dbh = DBI->connect($self->dsn, $self->user, $self->password);
    is(
       $d->get($dbh, '_introspector_driver'),
       $self->introspector_driver,
       'introspector driver'
    );
-
-   # is($d->_storage->rdbms_engine, $self->rdbms_engine, 'engine');
 };
 
-run_me('ODBC SQL Server', {
-   rdbms_engine => 'SQL Server',
-   dsn => $ENV{ODBC_MSSQL_DSN},
-   introspector_driver => 'ODBC_Microsoft_SQL_Server',
-}) if $ENV{ODBC_MSSQL_DSN};
-
 run_me(SQLite => {
-   rdbms_engine => 'SQLite',
    introspector_driver => 'SQLite',
    dsn => 'dbi:SQLite::memory:',
 });
+
+run_me('ODBC SQL Server', {
+   dsn      => $ENV{DBIITEST_ODBC_MSSQL_DSN},
+   user     => $ENV{DBIITEST_ODBC_MSSQL_USER},
+   password => $ENV{DBIITEST_ODBC_MSSQL_PASSWORD},
+
+   introspector_driver => 'ODBC_Microsoft_SQL_Server',
+}) if $ENV{DBIITEST_ODBC_MSSQL_DSN};
+
+run_me(Pg => {
+   dsn      => $ENV{DBIITEST_PG_DSN},
+   user     => $ENV{DBIITEST_PG_USER},
+   password => $ENV{DBIITEST_PG_PASSWORD},
+
+   introspector_driver => 'Pg',
+}) if $ENV{DBIITEST_PG_DSN};
+
+run_me(mysql => {
+   dsn      => $ENV{DBIITEST_MYSQL_DSN},
+   user     => $ENV{DBIITEST_MYSQL_USER},
+   password => $ENV{DBIITEST_MYSQL_PASSWORD},
+
+   introspector_driver => 'mysql',
+}) if $ENV{DBIITEST_MYSQL_DSN};
 
 done_testing;
 
