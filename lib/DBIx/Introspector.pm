@@ -37,11 +37,11 @@ sub _build_drivers {
          },
          parents => ['DBI'],
       },
-      { name => 'ODBC_ACCESS',               parents => ['ODBC', 'ACCESS'] },
-      { name => 'ODBC_DB2_400_SQL',          parents => ['ODBC', 'DB2'] },
-      { name => 'ODBC_Firebird',             parents => ['ODBC', 'Firebird::Common' ] },
-      { name => 'ODBC_Microsoft_SQL_Server', parents => ['ODBC', 'MSSQL'] },
-      { name => 'ODBC_SQL_Anywhere',         parents => ['ODBC', 'SQLAnywhere'] },
+      { name => 'ODBC_ACCESS',               parents => ['ACCESS', 'ODBC'] },
+      { name => 'ODBC_DB2_400_SQL',          parents => ['DB2', 'ODBC'] },
+      { name => 'ODBC_Firebird',             parents => ['Firebird::Common', 'ODBC'] },
+      { name => 'ODBC_Microsoft_SQL_Server', parents => ['MSSQL', 'ODBC'] },
+      { name => 'ODBC_SQL_Anywhere',         parents => ['SQLAnywhere', 'ODBC'] },
       {
          name => 'ADO',
          determination_strategy => sub {
@@ -51,8 +51,8 @@ sub _build_drivers {
          },
          parents => ['DBI'],
       },
-      { name => 'ADO_MS_Jet',               parents => ['ADO'] },
-      { name => 'ADO_Microsoft_SQL_Server', parents => ['ADO', 'MSSQL'] },
+      { name => 'ADO_MS_Jet',               parents => ['ACCESS', 'ADO'] },
+      { name => 'ADO_Microsoft_SQL_Server', parents => ['MSSQL', 'ADO'] },
    ]
 }
 

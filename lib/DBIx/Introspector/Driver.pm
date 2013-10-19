@@ -30,7 +30,11 @@ has _parents => (
    init_arg => 'parents',
 );
 
-sub _add_option { shift->_options->{shift @_} = shift }
+sub _add_option {
+   my ($self, $key, $value) = @_;
+
+   $self->_options->{$key} = $value
+}
 
 sub _determine {
    my ($self, $dbh) = @_;
@@ -49,12 +53,14 @@ sub _get {
       return $option->(@_)
    }
    elsif ($option and my $driver = $drivers_by_name->{$option}) {
-      $driver->_get(@_)
+      $driver->_get($dbh, $drivers_by_name, $key)
    }
    elsif (@{$self->_parents}) {
       my @p = @{$self->_parents};
       for my $parent (@p) {
-         my $ret = $parent->_get(@_);
+         my $driver = $drivers_by_name->{$parent};
+         die "no such driver <$parent>" unless $driver;
+         my $ret = $driver->_get($dbh, $drivers_by_name, $key);
          return $ret if $ret
       }
    }
