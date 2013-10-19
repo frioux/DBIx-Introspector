@@ -19,13 +19,14 @@ sub _build_drivers {
       { name => 'DB2',         parents => ['DBI'] },
       { name => 'Informix',    parents => ['DBI'] },
       { name => 'InterBase',   parents => ['DBI'] },
-      { name => 'MSSQL',       parents => ['DBI'] }, # 90% sure this is virtual
+      { name => 'MSSQL',       parents => ['DBI'] },
       { name => 'Oracle',      parents => ['DBI'] },
       { name => 'Pg',          parents => ['DBI'] },
       { name => 'SQLAnywhere', parents => ['DBI'] },
       { name => 'SQLite',      parents => ['DBI'] },
       { name => 'Sybase',      parents => ['DBI'] },
       { name => 'mysql',       parents => ['DBI'] },
+      { name => 'Firebird::Common',    parents => ['Interbase'] },
       { name => 'Firebird',    parents => ['Interbase'] },
       {
          name => 'ODBC',
@@ -36,11 +37,11 @@ sub _build_drivers {
          },
          parents => ['DBI'],
       },
-      { name => 'ODBC_ACCESS',               parents => ['ODBC'] },
-      { name => 'ODBC_DB2_400_SQL',          parents => ['ODBC'] },
-      { name => 'ODBC_Firebird',             parents => ['ODBC'] },
-      { name => 'ODBC_Microsoft_SQL_Server', parents => ['ODBC'] },
-      { name => 'ODBC_SQL_Anywhere',         parents => ['ODBC'] },
+      { name => 'ODBC_ACCESS',               parents => ['ODBC', 'ACCESS'] },
+      { name => 'ODBC_DB2_400_SQL',          parents => ['ODBC', 'DB2'] },
+      { name => 'ODBC_Firebird',             parents => ['ODBC', 'Firebird::Common' ] },
+      { name => 'ODBC_Microsoft_SQL_Server', parents => ['ODBC', 'MSSQL'] },
+      { name => 'ODBC_SQL_Anywhere',         parents => ['ODBC', 'SQLAnywhere'] },
       {
          name => 'ADO',
          determination_strategy => sub {
@@ -51,7 +52,7 @@ sub _build_drivers {
          parents => ['DBI'],
       },
       { name => 'ADO_MS_Jet',               parents => ['ADO'] },
-      { name => 'ADO_Microsoft_SQL_Server', parents => ['ADO'] },
+      { name => 'ADO_Microsoft_SQL_Server', parents => ['ADO', 'MSSQL'] },
    ]
 }
 
