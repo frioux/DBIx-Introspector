@@ -13,7 +13,13 @@ sub _build_drivers {
    return [ map DBIx::Introspector::Driver->new($_),
       {
          name => 'DBI',
-         determination_strategy => sub { $_[1]->{Driver}{Name} },
+         dbh_determination_strategy => sub { $_[1]->{Driver}{Name} },
+         dsn_determination_strategy => sub {
+            my $dsn = $_[1] || $ENV{DBI_DSN} || '';
+            my ($driver) = $dsn =~ /dbi:([^:]+):/i;
+            $driver ||= $ENV{DBI_DRIVER};
+            return $driver
+         },
       },
       { name => 'ACCESS',      parents => ['DBI'] },
       { name => 'DB2',         parents => ['DBI'] },
@@ -30,7 +36,7 @@ sub _build_drivers {
       { name => 'Firebird',    parents => ['Interbase'] },
       {
          name => 'ODBC',
-         determination_strategy => sub {
+         dbh_determination_strategy => sub {
             my $v = $_[0]->_get_info_from_dbh($_[1], 'SQL_DBMS_NAME');
             $v =~ s/\W/_/g;
             "ODBC_$v"
@@ -44,7 +50,7 @@ sub _build_drivers {
       { name => 'ODBC_SQL_Anywhere',         parents => ['SQLAnywhere', 'ODBC'] },
       {
          name => 'ADO',
-         determination_strategy => sub {
+         dbh_determination_strategy => sub {
             my $v = $_[0]->_get_info_from_dbh($_[1], 'SQL_DBMS_NAME');
             $v =~ s/\W/_/g;
             "ADO_$v"
@@ -85,21 +91,21 @@ sub decorate_driver {
 }
 
 sub get {
-   my ($self, $dbh, $key) = @_;
+   my ($self, $dbh, $dsn, $key) = @_;
 
-   $self->_driver_for($dbh)
+   $self->_driver_for($dbh, $dsn)
       ->_get($dbh, $self->_drivers_by_name, $key)
 }
 
 sub _driver_for {
-   my ($self, $dbh) = @_;
+   my ($self, $dbh, $dsn) = @_;
 
    my $driver = $self->_root_driver;
    my $done;
 
    DETECT:
    do {
-      $done = $driver->_determine($dbh);
+      $done = $driver->_determine($dbh, $dsn);
       if (!defined $done) {
          die "cannot figure out wtf this is"
       } elsif ($done ne 1) {

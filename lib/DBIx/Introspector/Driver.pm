@@ -8,10 +8,16 @@ has name => (
    required => 1,
 );
 
-has _determination_strategy => (
+has _dbh_determination_strategy => (
    is => 'ro',
    default => sub { sub { 1 } },
-   init_arg => 'determination_strategy',
+   init_arg => 'dbh_determination_strategy',
+);
+
+has _dsn_determination_strategy => (
+   is => 'ro',
+   default => sub { sub { 1 } },
+   init_arg => 'dsn_determination_strategy',
 );
 
 has _options => (
@@ -37,11 +43,14 @@ sub _add_option {
 }
 
 sub _determine {
-   my ($self, $dbh) = @_;
+   my ($self, $dbh, $dsn) = @_;
 
-   my $strategy = $self->_determination_strategy;
+   my $dbh_strategy = $self->_dbh_determination_strategy;
 
-   $self->$strategy($dbh)
+   return $self->$dbh_strategy($dbh) if $dbh;
+
+   my $dsn_strategy = $self->_dsn_determination_strategy;
+   $self->$dsn_strategy($dsn)
 }
 
 sub _get {

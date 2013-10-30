@@ -4,24 +4,32 @@ use Test::Roo;
 use DBI;
 use DBIx::Introspector;
 
-has [qw(dsn user password rdbms_engine introspector_driver)]
-   => ( is => 'ro' );
+has [qw(
+   dsn user password rdbms_engine
+   dbh_introspector_driver dsn_introspector_driver
+)] => ( is => 'ro' );
 
 test basic => sub {
    my $self = shift;
 
    my $d = DBIx::Introspector->new();
 
+   is(
+      $d->get(undef, $self->dsn, '_introspector_driver'),
+      $self->dsn_introspector_driver,
+      'dsn introspector driver'
+   );
    my $dbh = DBI->connect($self->dsn, $self->user, $self->password);
    is(
-      $d->get($dbh, '_introspector_driver'),
-      $self->introspector_driver,
-      'introspector driver'
+      $d->get($dbh, $self->dsn, '_introspector_driver'),
+      $self->dbh_introspector_driver,
+      'dbh introspector driver'
    );
 };
 
 run_me(SQLite => {
-   introspector_driver => 'SQLite',
+   dbh_introspector_driver => 'SQLite',
+   dsn_introspector_driver => 'SQLite',
    dsn => 'dbi:SQLite::memory:',
 });
 
@@ -30,7 +38,8 @@ run_me('ODBC SQL Server', {
    user     => $ENV{DBIITEST_ODBC_MSSQL_USER},
    password => $ENV{DBIITEST_ODBC_MSSQL_PASSWORD},
 
-   introspector_driver => 'ODBC_Microsoft_SQL_Server',
+   dbh_introspector_driver => 'ODBC_Microsoft_SQL_Server',
+   dsn_introspector_driver => 'ODBC',
 }) if $ENV{DBIITEST_ODBC_MSSQL_DSN};
 
 run_me(Pg => {
@@ -38,7 +47,8 @@ run_me(Pg => {
    user     => $ENV{DBIITEST_PG_USER},
    password => $ENV{DBIITEST_PG_PASSWORD},
 
-   introspector_driver => 'Pg',
+   dbh_introspector_driver => 'Pg',
+   dsn_introspector_driver => 'Pg',
 }) if $ENV{DBIITEST_PG_DSN};
 
 run_me(mysql => {
@@ -46,7 +56,8 @@ run_me(mysql => {
    user     => $ENV{DBIITEST_MYSQL_USER},
    password => $ENV{DBIITEST_MYSQL_PASSWORD},
 
-   introspector_driver => 'mysql',
+   dbh_introspector_driver => 'mysql',
+   dsn_introspector_driver => 'mysql',
 }) if $ENV{DBIITEST_MYSQL_DSN};
 
 done_testing;
