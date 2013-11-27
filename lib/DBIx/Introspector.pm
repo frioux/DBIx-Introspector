@@ -5,6 +5,7 @@ use DBIx::Introspector::Driver;
 
 has _drivers => (
    is => 'ro',
+   init_arg => 'drivers',
    builder => '_build_drivers',
    lazy => 1,
 );
@@ -74,10 +75,19 @@ has _drivers_by_name => (
 sub add_driver {
    my ($self, $driver) = @_;
 
-   die "driver must be a DBIx::Driver" unless $driver->isa('DBIx::Driver');
+   $self->_clear_drivers_by_name;
+   # check for dupes?
+   push @{$self->_drivers}, DBIx::Introspector::Driver->new($driver)
+}
+
+sub replace_driver {
+   my ($self, $driver) = @_;
 
    $self->_clear_drivers_by_name;
-   push @{$self->_drivers}, $driver
+   @{$self->_drivers} = (
+      (grep $_ ne $driver->{name}, @{$self->_drivers}),
+      DBIx::Introspector::Driver->new($driver)
+   );
 }
 
 sub decorate_driver {
