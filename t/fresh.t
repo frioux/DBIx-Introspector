@@ -26,6 +26,9 @@ my $d = DBIx::Introspector->new(
             my ($v) = $_[1]->selectrow_array('SELECT "value" FROM "a"');
             return "SQLite$v"
          },
+         options => {
+            bar => sub { 2 },
+         },
       },
       { name => 'SQLite1', parents => ['SQLite'] },
       { name => 'SQLite2', parents => ['SQLite'] },
@@ -52,5 +55,6 @@ $d->replace_driver({
 is($d->get($dbh, 'dbi:SQLite::memory:', 'foo'), 'bar');
 $dbh->do('UPDATE "a" SET "value" = 2');
 is($d->get($dbh, 'dbi:SQLite::memory:', '_introspector_driver'), 'SQLite2');
+is($d->get($dbh, 'dbi:SQLite::memory:', 'bar'), 2, 'oo dispatch');
 
 done_testing;
