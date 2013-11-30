@@ -22,7 +22,7 @@ has _dsn_determination_strategy => (
 
 has _options => (
    is => 'ro',
-   builder => sub { 
+   builder => sub {
       +{
          _introspector_driver => sub { $_[0]->name },
       }
