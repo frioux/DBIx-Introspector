@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Test::More;
+use Test::Fatal;
 use DBIx::Introspector;
 use DBI;
 
@@ -29,6 +30,9 @@ my $d = DBIx::Introspector->new(
          dsn_options => {
             bar => sub { 2 },
          },
+         dbh_options => {
+            baz => sub { 3 },
+         },
       },
       { name => 'SQLite1', parents => ['SQLite'] },
       { name => 'SQLite2', parents => ['SQLite'] },
@@ -49,5 +53,14 @@ $d->replace_driver({
 is($d->get(undef, 'dbi:SQLite:db1', 'foo'), 'bar');
 is($d->get(undef, 'dbi:SQLite:db2', '_introspector_driver'), 'SQLite2');
 is($d->get(undef, 'dbi:SQLite:db2', 'bar'), 2, 'oo dispatch');
+subtest 'dbh fallback' => sub {
+   my $dbh;
+   my $get_dbh = sub { $dbh };
+   my $connect = sub { $dbh = DBI->connect('dbi:SQLite::memory:') };
+   ok(exception { $d->get($get_dbh, 'dbi:SQLite:db2', 'baz') }, 'throws');
+   is($d->get($get_dbh, 'dbi:SQLite:db2', 'baz', {
+      dbh_fallback_connect => $connect,
+   }), 3, 'dbh fallback');
+};
 
 done_testing;

@@ -111,21 +111,36 @@ sub decorate_driver_dbh {
 }
 
 sub get {
-   my ($self, $dbh, $dsn, $key) = @_;
+   my ($self, $dbh, $dsn, $key, $opt) = @_;
+   $opt ||= {};
 
-   return $self->_driver_for($dbh, $dsn)
+   return $self->_driver_for((ref $dbh eq 'CODE' ? $dbh->() : $dbh), $dsn)
       ->_get_via_dbh({
          drivers_by_name => $self->_drivers_by_name,
          dbh => $dbh,
          key => $key,
       }) if $dbh;
 
-   return $self->_driver_for($dbh, $dsn)
+   my $dsn_ret = $self->_driver_for($dbh, $dsn)
       ->_get_via_dsn({
          drivers_by_name => $self->_drivers_by_name,
          dsn => $dsn,
          key => $key,
       }) if $dsn;
+   return $dsn_ret if defined $dsn_ret;
+
+   if (ref $dbh eq 'CODE' && ref $opt->{dbh_fallback_connect} eq 'CODE') {
+      $opt->{dbh_fallback_connect}->();
+      my $dbh = $dbh->();
+      return $self->_driver_for($dbh, $dsn)
+         ->_get_via_dbh({
+            drivers_by_name => $self->_drivers_by_name,
+            dbh => $dbh,
+            key => $key,
+         })
+   } else {
+      die "wtf"
+   }
 }
 
 sub _driver_for {
