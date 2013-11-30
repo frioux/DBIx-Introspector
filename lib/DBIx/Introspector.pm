@@ -90,11 +90,21 @@ sub replace_driver {
    );
 }
 
-sub decorate_driver {
+sub decorate_driver_dsn {
    my ($self, $name, $key, $value) = @_;
 
    if (my $d = $self->_drivers_by_name->{$name}) {
-      $d->_add_option($key => $value)
+      $d->_add_dsn_option($key => $value)
+   } else {
+      die "no such driver <$name>"
+   }
+}
+
+sub decorate_driver_dbh {
+   my ($self, $name, $key, $value) = @_;
+
+   if (my $d = $self->_drivers_by_name->{$name}) {
+      $d->_add_dbh_option($key => $value)
    } else {
       die "no such driver <$name>"
    }
@@ -103,12 +113,19 @@ sub decorate_driver {
 sub get {
    my ($self, $dbh, $dsn, $key) = @_;
 
-   $self->_driver_for($dbh, $dsn)
-      ->_get({
+   return $self->_driver_for($dbh, $dsn)
+      ->_get_via_dbh({
          drivers_by_name => $self->_drivers_by_name,
          dbh => $dbh,
          key => $key,
-      })
+      }) if $dbh;
+
+   return $self->_driver_for($dbh, $dsn)
+      ->_get_via_dsn({
+         drivers_by_name => $self->_drivers_by_name,
+         dsn => $dsn,
+         key => $key,
+      }) if $dsn;
 }
 
 sub _driver_for {

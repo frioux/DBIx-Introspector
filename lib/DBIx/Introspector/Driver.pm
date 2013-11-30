@@ -20,14 +20,24 @@ has _dsn_determination_strategy => (
    init_arg => 'dsn_determination_strategy',
 );
 
-has _options => (
+has _dbh_options => (
    is => 'ro',
    builder => sub {
       +{
          _introspector_driver => sub { $_[0]->name },
       }
    },
-   init_arg => 'options',
+   init_arg => 'dbh_options',
+);
+
+has _dsn_options => (
+   is => 'ro',
+   builder => sub {
+      +{
+         _introspector_driver => sub { $_[0]->name },
+      }
+   },
+   init_arg => 'dsn_options',
 );
 
 has _parents => (
@@ -36,10 +46,16 @@ has _parents => (
    init_arg => 'parents',
 );
 
-sub _add_option {
+sub _add_dbh_option {
    my ($self, $key, $value) = @_;
 
-   $self->_options->{$key} = $value
+   $self->_dbh_options->{$key} = $value
+}
+
+sub _add_dsn_option {
+   my ($self, $key, $value) = @_;
+
+   $self->_dsn_options->{$key} = $value
 }
 
 sub _determine {
@@ -53,27 +69,54 @@ sub _determine {
    $self->$dsn_strategy($dsn)
 }
 
-sub _get {
+sub _get_via_dsn {
    my ($self, $args) = @_;
 
    my $drivers_by_name = $args->{drivers_by_name};
-   my $dbh = $args->{dbh};
    my $key = $args->{key};
 
-   my $option = $self->_options->{$key};
+   my $option = $self->_dsn_options->{$key};
 
    if ($option && ref $option && ref $option eq 'CODE') {
-      return $option->(@_)
+      return $option->($self, $args->{dsn})
    }
    elsif ($option and my $driver = $drivers_by_name->{$option}) {
-      $driver->_get($args)
+      $driver->_get_via_dsn($args)
    }
    elsif (@{$self->_parents}) {
       my @p = @{$self->_parents};
       for my $parent (@p) {
          my $driver = $drivers_by_name->{$parent};
          die "no such driver <$parent>" unless $driver;
-         my $ret = $driver->_get($args);
+         my $ret = $driver->_get_via_dsn($args);
+         return $ret if $ret
+      }
+   }
+   else {
+      return undef
+   }
+}
+
+sub _get_via_dbh {
+   my ($self, $args) = @_;
+
+   my $drivers_by_name = $args->{drivers_by_name};
+   my $key = $args->{key};
+
+   my $option = $self->_dbh_options->{$key};
+
+   if ($option && ref $option && ref $option eq 'CODE') {
+      return $option->($self, $args->{dbh})
+   }
+   elsif ($option and my $driver = $drivers_by_name->{$option}) {
+      $driver->_get_via_dbh($args)
+   }
+   elsif (@{$self->_parents}) {
+      my @p = @{$self->_parents};
+      for my $parent (@p) {
+         my $driver = $drivers_by_name->{$parent};
+         die "no such driver <$parent>" unless $driver;
+         my $ret = $driver->_get_via_dbh($args);
          return $ret if $ret
       }
    }

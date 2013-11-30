@@ -26,7 +26,7 @@ my $d = DBIx::Introspector->new(
             my ($v) = $_[1]->selectrow_array('SELECT "value" FROM "a"');
             return "SQLite$v"
          },
-         options => {
+         dbh_options => {
             bar => sub { 2 },
          },
       },
@@ -48,7 +48,7 @@ is($d->get($dbh, 'dbi:SQLite::memory:', 'foo'), '');
 $d->replace_driver({
    name => 'SQLite1',
    parents => ['SQLite'],
-   options => {
+   dbh_options => {
       foo => sub { 'bar' },
    },
 });

@@ -10,12 +10,12 @@ my $d = DBIx::Introspector->new();
 
 # this would handily supplant this gross code:
 # https://github.com/frioux/DBIx-Class-MaterializedPath/blob/master/lib/DBIx/Class/MaterializedPath.pm#L97
-$d->decorate_driver(DBI => concat_sql => sub { '%s || %s' });
-$d->decorate_driver(mysql => concat_sql => sub { 'CONCAT( %s, %s)' });
-$d->decorate_driver(MSSQL => concat_sql => sub { '%s + %s' });
+$d->decorate_driver_dbh(DBI => concat_sql => sub { '%s || %s' });
+$d->decorate_driver_dbh(mysql => concat_sql => sub { 'CONCAT( %s, %s)' });
+$d->decorate_driver_dbh(MSSQL => concat_sql => sub { '%s + %s' });
 my $n = $d->_drivers_by_name;
 is(
-   $n->{'ODBC_Microsoft_SQL_Server'}->_get({
+   $n->{'ODBC_Microsoft_SQL_Server'}->_get_via_dbh({
       drivers_by_name => $n,
       dbh => undef,
       key => 'concat_sql'
@@ -25,7 +25,7 @@ is(
 );
 
 is(
-   $d->_drivers_by_name->{'ADO_Microsoft_SQL_Server'}->_get({
+   $d->_drivers_by_name->{'ADO_Microsoft_SQL_Server'}->_get_via_dbh({
       drivers_by_name => $n,
       dbh => undef,
       key => 'concat_sql'
