@@ -54,7 +54,11 @@ sub _determine {
 }
 
 sub _get {
-   my ($self, $dbh, $drivers_by_name, $key) = @_;
+   my ($self, $args) = @_;
+
+   my $drivers_by_name = $args->{drivers_by_name};
+   my $dbh = $args->{dbh};
+   my $key = $args->{key};
 
    my $option = $self->_options->{$key};
 
@@ -62,14 +66,14 @@ sub _get {
       return $option->(@_)
    }
    elsif ($option and my $driver = $drivers_by_name->{$option}) {
-      $driver->_get($dbh, $drivers_by_name, $key)
+      $driver->_get($args)
    }
    elsif (@{$self->_parents}) {
       my @p = @{$self->_parents};
       for my $parent (@p) {
          my $driver = $drivers_by_name->{$parent};
          die "no such driver <$parent>" unless $driver;
-         my $ret = $driver->_get($dbh, $drivers_by_name, $key);
+         my $ret = $driver->_get($args);
          return $ret if $ret
       }
    }

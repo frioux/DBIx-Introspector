@@ -15,13 +15,21 @@ $d->decorate_driver(mysql => concat_sql => sub { 'CONCAT( %s, %s)' });
 $d->decorate_driver(MSSQL => concat_sql => sub { '%s + %s' });
 my $n = $d->_drivers_by_name;
 is(
-   $n->{'ODBC_Microsoft_SQL_Server'}->_get(undef, $n, 'concat_sql'),
+   $n->{'ODBC_Microsoft_SQL_Server'}->_get({
+      drivers_by_name => $n,
+      dbh => undef,
+      key => 'concat_sql'
+   }),
    '%s + %s',
    'ODBC_MSSQL "subclasses" MSSQL'
 );
 
 is(
-   $d->_drivers_by_name->{'ADO_Microsoft_SQL_Server'}->_get(undef, $n, 'concat_sql'),
+   $d->_drivers_by_name->{'ADO_Microsoft_SQL_Server'}->_get({
+      drivers_by_name => $n,
+      dbh => undef,
+      key => 'concat_sql'
+   }),
    '%s + %s',
    'ADO_MSSQL "subclasses" MSSQL'
 );

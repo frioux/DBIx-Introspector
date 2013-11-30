@@ -104,7 +104,11 @@ sub get {
    my ($self, $dbh, $dsn, $key) = @_;
 
    $self->_driver_for($dbh, $dsn)
-      ->_get($dbh, $self->_drivers_by_name, $key)
+      ->_get({
+         drivers_by_name => $self->_drivers_by_name,
+         dbh => $dbh,
+         key => $key,
+      })
 }
 
 sub _driver_for {
