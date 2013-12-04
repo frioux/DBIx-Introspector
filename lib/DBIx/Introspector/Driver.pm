@@ -77,11 +77,10 @@ sub _get_via_dsn {
 
    my $option = $self->_dsn_options->{$key};
 
-   if ($option && ref $option && ref $option eq 'CODE') {
-      return $option->($self, $args->{dsn})
-   }
-   elsif ($option and my $driver = $drivers_by_name->{$option}) {
-      $driver->_get_via_dsn($args)
+   if ($option) {
+      return $option->($self, $args->{dbh})
+        if ref $option && ref $option eq 'CODE';
+      return $option;
    }
    elsif (@{$self->_parents}) {
       my @p = @{$self->_parents};
@@ -89,12 +88,10 @@ sub _get_via_dsn {
          my $driver = $drivers_by_name->{$parent};
          die "no such driver <$parent>" unless $driver;
          my $ret = $driver->_get_via_dsn($args);
-         return $ret if $ret
+         return $ret if defined $ret
       }
    }
-   else {
-      return undef
-   }
+   return undef
 }
 
 sub _get_via_dbh {
@@ -105,11 +102,10 @@ sub _get_via_dbh {
 
    my $option = $self->_dbh_options->{$key};
 
-   if ($option && ref $option && ref $option eq 'CODE') {
+   if ($option) {
       return $option->($self, $args->{dbh})
-   }
-   elsif ($option and my $driver = $drivers_by_name->{$option}) {
-      $driver->_get_via_dbh($args)
+        if ref $option && ref $option eq 'CODE';
+      return $option;
    }
    elsif (@{$self->_parents}) {
       my @p = @{$self->_parents};
@@ -120,9 +116,7 @@ sub _get_via_dbh {
          return $ret if $ret
       }
    }
-   else {
-      return undef
-   }
+   return undef
 }
 
 sub _get_info_from_dbh {

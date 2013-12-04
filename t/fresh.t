@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Test::More;
+use Test::Fatal;
 use DBIx::Introspector;
 use DBI;
 
@@ -29,6 +30,9 @@ my $d = DBIx::Introspector->new(
          dbh_options => {
             bar => sub { 2 },
          },
+         dsn_options => {
+            borg => sub { 'magic ham' },
+         },
       },
       { name => 'SQLite1', parents => ['SQLite'] },
       { name => 'SQLite2', parents => ['SQLite'] },
@@ -42,9 +46,8 @@ $dbh->do($_) for (
    'CREATE TABLE "a" ("value" NOT NULL)',
    'INSERT INTO "a" ("value") VALUES (1)',
 );
-
 is($d->get($dbh, 'dbi:SQLite::memory:', '_introspector_driver'), 'SQLite1');
-is($d->get($dbh, 'dbi:SQLite::memory:', 'foo'), '');
+ok(exception { $d->get($dbh, 'dbi:SQLite::memory:', 'foo') }, 'unknown option dies');;
 $d->replace_driver({
    name => 'SQLite1',
    parents => ['SQLite'],
@@ -56,5 +59,7 @@ is($d->get($dbh, 'dbi:SQLite::memory:', 'foo'), 'bar');
 $dbh->do('UPDATE "a" SET "value" = 2');
 is($d->get($dbh, 'dbi:SQLite::memory:', '_introspector_driver'), 'SQLite2');
 is($d->get($dbh, 'dbi:SQLite::memory:', 'bar'), 2, 'oo dispatch');
+
+is($d->get($dbh, 'dbi:SQLite::memory:', 'borg'), 'magic ham', 'working $dbh still dispatches to dsn');
 
 done_testing;

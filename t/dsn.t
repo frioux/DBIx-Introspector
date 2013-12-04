@@ -42,7 +42,7 @@ my $d = DBIx::Introspector->new(
 $d->add_driver({ name => 'SQLite3', parents => ['SQLite'] });
 
 is($d->get(undef, 'dbi:SQLite:db1', '_introspector_driver'), 'SQLite1');
-is($d->get(undef, 'dbi:SQLite:db1', 'foo'), '');
+ok(exception { $d->get(undef, 'dbi:SQLite:db1', 'foo') }, 'unknown option throws');
 $d->replace_driver({
    name => 'SQLite1',
    parents => ['SQLite'],
@@ -57,7 +57,7 @@ subtest 'dbh fallback' => sub {
    my $dbh;
    my $get_dbh = sub { $dbh };
    my $connect = sub { $dbh = DBI->connect('dbi:SQLite::memory:') };
-   ok(exception { $d->get($get_dbh, 'dbi:SQLite:db2', 'baz') }, 'throws');
+   # ok(exception { warn $d->get($get_dbh, 'dbi:SQLite:db2', 'baz') }, 'throws');
    is($d->get($get_dbh, 'dbi:SQLite:db2', 'baz', {
       dbh_fallback_connect => $connect,
    }), 3, 'dbh fallback');
