@@ -12,7 +12,7 @@ has [qw(
 test basic => sub {
    my $self = shift;
 
-   my $d = DBIx::Introspector->new();
+   my $d = DBIx::Introspector->new( drivers => '2013.12' );
 
    is(
       $d->get(undef, $self->dsn, '_introspector_driver'),

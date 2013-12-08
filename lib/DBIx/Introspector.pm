@@ -5,63 +5,62 @@ use DBIx::Introspector::Driver;
 
 has _drivers => (
    is => 'ro',
+   required => 1,
    init_arg => 'drivers',
-   builder => '_build_drivers',
-   lazy => 1,
+   coerce => sub {
+      return $_[0] if ref $_[0] eq 'ARRAY';
+      return [ map DBIx::Introspector::Driver->new($_),
+         {
+            name => 'DBI',
+            dbh_determination_strategy => sub { $_[1]->{Driver}{Name} },
+            dsn_determination_strategy => sub {
+               my $dsn = $_[1] || $ENV{DBI_DSN} || '';
+               my ($driver) = $dsn =~ /dbi:([^:]+):/i;
+               $driver ||= $ENV{DBI_DRIVER};
+               return $driver
+            },
+         },
+         { name => 'ACCESS',      parents => ['DBI'] },
+         { name => 'DB2',         parents => ['DBI'] },
+         { name => 'Informix',    parents => ['DBI'] },
+         { name => 'InterBase',   parents => ['DBI'] },
+         { name => 'MSSQL',       parents => ['DBI'] },
+         { name => 'Oracle',      parents => ['DBI'] },
+         { name => 'Pg',          parents => ['DBI'] },
+         { name => 'SQLAnywhere', parents => ['DBI'] },
+         { name => 'SQLite',      parents => ['DBI'] },
+         { name => 'Sybase',      parents => ['DBI'] },
+         { name => 'mysql',       parents => ['DBI'] },
+         { name => 'Firebird::Common',    parents => ['Interbase'] },
+         { name => 'Firebird',    parents => ['Interbase'] },
+         {
+            name => 'ODBC',
+            dbh_determination_strategy => sub {
+               my $v = $_[0]->_get_info_from_dbh($_[1], 'SQL_DBMS_NAME');
+               $v =~ s/\W/_/g;
+               "ODBC_$v"
+            },
+            parents => ['DBI'],
+         },
+         { name => 'ODBC_ACCESS',               parents => ['ACCESS', 'ODBC'] },
+         { name => 'ODBC_DB2_400_SQL',          parents => ['DB2', 'ODBC'] },
+         { name => 'ODBC_Firebird',             parents => ['Firebird::Common', 'ODBC'] },
+         { name => 'ODBC_Microsoft_SQL_Server', parents => ['MSSQL', 'ODBC'] },
+         { name => 'ODBC_SQL_Anywhere',         parents => ['SQLAnywhere', 'ODBC'] },
+         {
+            name => 'ADO',
+            dbh_determination_strategy => sub {
+               my $v = $_[0]->_get_info_from_dbh($_[1], 'SQL_DBMS_NAME');
+               $v =~ s/\W/_/g;
+               "ADO_$v"
+            },
+            parents => ['DBI'],
+         },
+         { name => 'ADO_MS_Jet',               parents => ['ACCESS', 'ADO'] },
+         { name => 'ADO_Microsoft_SQL_Server', parents => ['MSSQL', 'ADO'] },
+      ] if $_[0] eq '2013.12'
+   },
 );
-
-sub _build_drivers {
-   return [ map DBIx::Introspector::Driver->new($_),
-      {
-         name => 'DBI',
-         dbh_determination_strategy => sub { $_[1]->{Driver}{Name} },
-         dsn_determination_strategy => sub {
-            my $dsn = $_[1] || $ENV{DBI_DSN} || '';
-            my ($driver) = $dsn =~ /dbi:([^:]+):/i;
-            $driver ||= $ENV{DBI_DRIVER};
-            return $driver
-         },
-      },
-      { name => 'ACCESS',      parents => ['DBI'] },
-      { name => 'DB2',         parents => ['DBI'] },
-      { name => 'Informix',    parents => ['DBI'] },
-      { name => 'InterBase',   parents => ['DBI'] },
-      { name => 'MSSQL',       parents => ['DBI'] },
-      { name => 'Oracle',      parents => ['DBI'] },
-      { name => 'Pg',          parents => ['DBI'] },
-      { name => 'SQLAnywhere', parents => ['DBI'] },
-      { name => 'SQLite',      parents => ['DBI'] },
-      { name => 'Sybase',      parents => ['DBI'] },
-      { name => 'mysql',       parents => ['DBI'] },
-      { name => 'Firebird::Common',    parents => ['Interbase'] },
-      { name => 'Firebird',    parents => ['Interbase'] },
-      {
-         name => 'ODBC',
-         dbh_determination_strategy => sub {
-            my $v = $_[0]->_get_info_from_dbh($_[1], 'SQL_DBMS_NAME');
-            $v =~ s/\W/_/g;
-            "ODBC_$v"
-         },
-         parents => ['DBI'],
-      },
-      { name => 'ODBC_ACCESS',               parents => ['ACCESS', 'ODBC'] },
-      { name => 'ODBC_DB2_400_SQL',          parents => ['DB2', 'ODBC'] },
-      { name => 'ODBC_Firebird',             parents => ['Firebird::Common', 'ODBC'] },
-      { name => 'ODBC_Microsoft_SQL_Server', parents => ['MSSQL', 'ODBC'] },
-      { name => 'ODBC_SQL_Anywhere',         parents => ['SQLAnywhere', 'ODBC'] },
-      {
-         name => 'ADO',
-         dbh_determination_strategy => sub {
-            my $v = $_[0]->_get_info_from_dbh($_[1], 'SQL_DBMS_NAME');
-            $v =~ s/\W/_/g;
-            "ADO_$v"
-         },
-         parents => ['DBI'],
-      },
-      { name => 'ADO_MS_Jet',               parents => ['ACCESS', 'ADO'] },
-      { name => 'ADO_Microsoft_SQL_Server', parents => ['MSSQL', 'ADO'] },
-   ]
-}
 
 sub _root_driver { shift->_drivers->[0] }
 
@@ -182,7 +181,7 @@ __END__
 
 =head1 SYNOPSIS
 
- my $d = DBIx::Introspector->new;
+ my $d = DBIx::Introspector->new(drivers => '2013.12');
 
  # standard dialects
  $d->decorate_driver_dsn(Pg     => concat_sql => '? || ?');
@@ -275,9 +274,57 @@ So for example, I might do:
 Which will only connect if it has to, like if the user is using the C<DBD::ODBC>
 driver to connect.
 
+=head1 ATTRIBUTES
+
+=head2 C<drivers>
+
+This has no default and is required, though a sane defaultish value does exist.
+
+Currently there is one predefined set of drivers, named C<2013.12>.  If drivers
+or facts or just the general structure of drivers changes they will always be as
+a new named set of drivers.  C<2013.12> matches the 0.08250 release of
+L<DBIx::Class> and probably many previous and following releases.
+
+If you need to define it from scratch, you can just pass an arrayref of drivers;
+see the L<DRIVER DEFINITION> section on what is required for that.  But
+generally it will look something like this (from the tests):
+
+ my $d = DBIx::Introspector->new(
+   drivers => [ map DBIx::Introspector::Driver->new($_),
+      {
+         name => 'DBI',
+         dbh_determination_strategy => sub { $_[1]->{Driver}{Name} },
+         dsn_determination_strategy => sub {
+            my $dsn = $_[1] || $ENV{DBI_DSN} || '';
+            my ($driver) = $dsn =~ /dbi:([^:]+):/i;
+            $driver ||= $ENV{DBI_DRIVER};
+            return $driver
+         },
+      },
+      {
+         name => 'SQLite',
+         parents => ['DBI'],
+         dbh_determination_strategy => sub {
+            my ($v) = $_[1]->selectrow_array('SELECT "value" FROM "a"');
+            return "SQLite$v"
+         },
+         dbh_options => {
+            bar => sub { 2 },
+         },
+         dsn_options => {
+            borg => sub { 'magic ham' },
+         },
+      },
+      { name => 'SQLite1', parents => ['SQLite'] },
+      { name => 'SQLite2', parents => ['SQLite'] },
+   ]
+ );
+
+
 =head1 DRIVER DEFINITION
 
-Drivers have the following six attributes
+Drivers (C<DBIx::Introspector::Driver> objects) have the following six
+attributes:
 
 =head2 C<name>
 
