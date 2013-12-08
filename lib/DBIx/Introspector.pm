@@ -175,3 +175,179 @@ sub _driver_for {
 }
 
 1;
+
+__END__
+
+=pod
+
+=head1 SYNOPSIS
+
+ my $d = DBIx::Introspector->new;
+
+ # standard dialects
+ $d->decorate_driver_dsn(Pg     => concat_sql => '? || ?');
+ $d->decorate_driver_dsn(SQLite => concat_sql => '? || ?');
+
+ # non-standard
+ $d->decorate_driver_dsn(MSSQL  => concat_sql => '? + ?');
+ $d->decorate_driver_dsn(mysql  => concat_sql => 'CONCAT( ?, ? )');
+
+ my $concat_sql = $d->get($dbh, $dsn, 'concat_sql');
+
+=head1 DESCRIPTION
+
+C<DBIx::Introspector> is a module factored out of the L<DBIx::Class> database
+detection code.  Most code that needs to detect which database it is connected
+to assumes that there is a one-to-one mapping from database drivers to database
+engines.  Unfortunately reality is rarely that simple.  For instance,
+L<DBD::ODBC> is typically used to connect to SQL Server, but ODBC can be used to
+connect to PostgreSQL, MySQL, and Oracle.  Additionally, while ODBC is the most
+common way to connect to SQL Server, it is not the only option, as L<DBD::ADO>
+can also be used.
+
+C<DBIx::Introspector> can correctly detect which database you are connected to,
+because it was factor out of a complex, working codebase.  On top of that it has
+been written to be very extensible.  So if you needed to detect which version of
+your given database you are connected to that would not be difficult.
+
+Furthermore, C<DBIx::Introspector> does it's best to try to detect information
+based on the dsn you give it if you have not yet connected, so you can possibly
+avoid connection or at least defer connection.
+
+=head1 METHODS
+
+=head2 C<add_driver>
+
+ $dbii->add_driver({
+   name => 'Pg',
+   parents => ['DBI'],
+   dsn_options => {
+      concat_sql => '? || ?',
+      random_func => 'RANDOM()',
+   })
+
+Takes a hashref L<< defining a new driver | DRIVER DEFINITION >>.
+
+=head2 C<replace_driver>
+
+ $dbii->replace_driver({
+   name => 'Pg',
+   parents => ['DBI'],
+   dsn_options => {
+      concat_sql => '? || ?',
+      random_func => 'RANDOM()',
+   })
+
+Takes a hashref L<< defining a new driver | DRIVER DEFINITION >>.  Replaces
+the driver already defined with the same name.
+
+=head2 C<decorate_driver_dbh>
+
+ $dbii->decorate_driver_dbh('MSSQL', 'concat_sql', '? + ?')
+
+Takes a C<driver name>, C<key> and a C<value>.  The C<key value> pair will
+be inserted into the driver's C<dbh_options>.
+
+=head2 C<decorate_driver_dsn>
+
+ $dbii->decorate_driver_dsn('SQLite', 'concat_sql', '? || ?')
+
+Takes a C<driver name>, C<key> and a C<value>.  The C<key value> pair will
+be inserted into the driver's C<dsn_options>.
+
+=head2 C<get>
+
+ $dbii->get($dbh, $dsn, 'concat_sql')
+
+Takes a C<dbh>, C<dsn>, C<key>, and optionally a hashref of C<options>.
+
+The C<dbh> can be a coderef returning a C<dbh>.  If you provide the
+C<dbh_fallback_connect> option it will be used to connect the C<dbh> if it is
+not already connected and then queried, if the C<dsn> was insufficient.
+
+So for example, I might do:
+
+ my $dbh;
+ $dbii->get(sub { $dbh }, $dsn, 'concat_sql', {
+    dbh_fallback_connect => sub { $dbh = DBI->connect($dsn, $user, $pass) },
+ });
+
+Which will only connect if it has to, like if the user is using the C<DBD::ODBC>
+driver to connect.
+
+=head1 DRIVER DEFINITION
+
+Drivers have the following six attributes
+
+=head2 C<name>
+
+Required.  Must be unique among the drivers contained in the introspector.
+
+=head2 C<parents>
+
+Arrayref of parent drivers.  This allows parent drivers to implement common
+options among children.  So for example on might define a driver for each
+version of PostgreSQL, and have a parent driver that they all use for common
+base info.
+
+=head2 C<dbh_determination_strategy>
+
+This is a code reference that is called as a method on the driver with the
+C<dbh> as the first argument.  It should return a driver name.
+
+=head2 C<dsn_determination_strategy>
+
+This is a code reference that is called as a method on the driver with the
+C<dsn> as the first argument.  It should return a driver name.
+
+=head2 C<dbh_options>
+
+Hashref of C<< key value >> pairs for detecting information based on the
+C<dbh>.  A value that is not a code reference is returned directly, though
+I suggest non-coderefs all go in the L</dsn_options> so that they may be
+used without connecting if possilbe.
+
+If a code reference is passed it will get called as a method on the driver
+with the following keys passed in a hash reference:
+
+=over 2
+
+=item C<key>
+
+This is the name of the value that the user requested.
+
+=item C<dbh>
+
+This is the connected C<dbh> that you can use to introspect the database.
+
+=item C<drivers_by_name>
+
+You shouldn't use this, it's for internals.
+
+=back
+
+=head2 C<dsn_options>
+
+Hashref of C<< key value >> pairs for detecting information based on the
+C<dsn>.  A value that is not a code reference is returned directly.
+
+If a code reference is passed it will get called as a method on the driver
+with the following keys passed in a hash reference:
+
+=over 2
+
+=item C<key>
+
+This is the name of the value that the user requested.
+
+=item C<dsn>
+
+This is the connected C<dsn> that you can use to introspect the database.
+
+=item C<drivers_by_name>
+
+You shouldn't use this, it's for internals.
+
+=back
+
+=cut
