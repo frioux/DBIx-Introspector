@@ -58,7 +58,7 @@ has _drivers => (
          },
          { name => 'ADO_MS_Jet',               parents => ['ACCESS', 'ADO'] },
          { name => 'ADO_Microsoft_SQL_Server', parents => ['MSSQL', 'ADO'] },
-      ] if $_[0] eq '2013.12'
+      ] if $_[0] eq '2013-12.01'
    },
 );
 
@@ -183,7 +183,7 @@ __END__
 
 =head1 SYNOPSIS
 
- my $d = DBIx::Introspector->new(drivers => '2013.12');
+ my $d = DBIx::Introspector->new(drivers => '2013-12.01');
 
  # standard dialects
  $d->decorate_driver_unconnected(Pg     => concat_sql => '? || ?');
@@ -282,9 +282,9 @@ driver to connect.
 
 This has no default and is required, though a sane defaultish value does exist.
 
-Currently there is one predefined set of drivers, named C<2013.12>.  If drivers
+Currently there is one predefined set of drivers, named C<2013-12.01>.  If drivers
 or facts or just the general structure of drivers changes they will always be as
-a new named set of drivers.  C<2013.12> matches the 0.08250 release of
+a new named set of drivers.  C<2013-12.01> matches the 0.08250 release of
 L<DBIx::Class> and probably many previous and following releases.
 
 If you need to define it from scratch, you can just pass an arrayref of drivers;

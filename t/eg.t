@@ -6,7 +6,7 @@ use warnings;
 use Test::More;
 use DBIx::Introspector;
 
-my $d = DBIx::Introspector->new( drivers => '2013.12' );
+my $d = DBIx::Introspector->new( drivers => '2013-12.01' );
 
 $d->decorate_driver_connected(MSSQL => concat_sql => sub { '%s + %s' });
 my $n = $d->_drivers_by_name;
