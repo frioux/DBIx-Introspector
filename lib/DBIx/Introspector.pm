@@ -12,8 +12,8 @@ has _drivers => (
       return [ map DBIx::Introspector::Driver->new($_),
          {
             name => 'DBI',
-            dbh_determination_strategy => sub { $_[1]->{Driver}{Name} },
-            dsn_determination_strategy => sub {
+            connected_determination_strategy => sub { $_[1]->{Driver}{Name} },
+            unconnected_determination_strategy => sub {
                my $dsn = $_[1] || $ENV{DBI_DSN} || '';
                my ($driver) = $dsn =~ /dbi:([^:]+):/i;
                $driver ||= $ENV{DBI_DRIVER};
@@ -35,7 +35,7 @@ has _drivers => (
          { name => 'Firebird',    parents => ['Interbase'] },
          {
             name => 'ODBC',
-            dbh_determination_strategy => sub {
+            connected_determination_strategy => sub {
                my $v = $_[0]->_get_info_from_dbh($_[1], 'SQL_DBMS_NAME');
                $v =~ s/\W/_/g;
                "ODBC_$v"
@@ -49,7 +49,7 @@ has _drivers => (
          { name => 'ODBC_SQL_Anywhere',         parents => ['SQLAnywhere', 'ODBC'] },
          {
             name => 'ADO',
-            dbh_determination_strategy => sub {
+            connected_determination_strategy => sub {
                my $v = $_[0]->_get_info_from_dbh($_[1], 'SQL_DBMS_NAME');
                $v =~ s/\W/_/g;
                "ADO_$v"
@@ -89,21 +89,21 @@ sub replace_driver {
    );
 }
 
-sub decorate_driver_dsn {
+sub decorate_driver_unconnected {
    my ($self, $name, $key, $value) = @_;
 
    if (my $d = $self->_drivers_by_name->{$name}) {
-      $d->_add_dsn_option($key => $value)
+      $d->_add_unconnected_option($key => $value)
    } else {
       die "no such driver <$name>"
    }
 }
 
-sub decorate_driver_dbh {
+sub decorate_driver_connected {
    my ($self, $name, $key, $value) = @_;
 
    if (my $d = $self->_drivers_by_name->{$name}) {
-      $d->_add_dbh_option($key => $value)
+      $d->_add_connected_option($key => $value)
    } else {
       die "no such driver <$name>"
    }
@@ -120,13 +120,14 @@ sub get {
 
    if ($dbh and my $driver = $self->_driver_for((ref $dbh eq 'CODE' ? $dbh->() : $dbh), $dsn)) {
       my $ret = $driver
-         ->_get_via_dbh({
+         ->_get_when_connected({
             dbh => $dbh,
+            dsn => $dsn,
             @args,
          });
       return $ret if defined $ret;
       $ret = $driver
-         ->_get_via_dsn({
+         ->_get_when_unconnected({
             dsn => $dsn,
             @args,
          });
@@ -134,7 +135,7 @@ sub get {
    }
 
    my $dsn_ret = $self->_driver_for($dbh, $dsn)
-      ->_get_via_dsn({
+      ->_get_when_unconnected({
          dsn => $dsn,
          @args,
       }) if $dsn;
@@ -144,8 +145,9 @@ sub get {
       $opt->{dbh_fallback_connect}->();
       my $dbh = $dbh->();
       return $self->_driver_for($dbh, $dsn)
-         ->_get_via_dbh({
+         ->_get_when_connected({
             dbh => $dbh,
+            dsn => $dsn,
             @args,
          })
    }
@@ -184,12 +186,12 @@ __END__
  my $d = DBIx::Introspector->new(drivers => '2013.12');
 
  # standard dialects
- $d->decorate_driver_dsn(Pg     => concat_sql => '? || ?');
- $d->decorate_driver_dsn(SQLite => concat_sql => '? || ?');
+ $d->decorate_driver_unconnected(Pg     => concat_sql => '? || ?');
+ $d->decorate_driver_unconnected(SQLite => concat_sql => '? || ?');
 
  # non-standard
- $d->decorate_driver_dsn(MSSQL  => concat_sql => '? + ?');
- $d->decorate_driver_dsn(mysql  => concat_sql => 'CONCAT( ?, ? )');
+ $d->decorate_driver_unconnected(MSSQL  => concat_sql => '? + ?');
+ $d->decorate_driver_unconnected(mysql  => concat_sql => 'CONCAT( ?, ? )');
 
  my $concat_sql = $d->get($dbh, $dsn, 'concat_sql');
 
@@ -220,7 +222,7 @@ avoid connection or at least defer connection.
  $dbii->add_driver({
    name => 'Pg',
    parents => ['DBI'],
-   dsn_options => {
+   unconnected_options => {
       concat_sql => '? || ?',
       random_func => 'RANDOM()',
    })
@@ -232,7 +234,7 @@ Takes a hashref L<< defining a new driver | DRIVER DEFINITION >>.
  $dbii->replace_driver({
    name => 'Pg',
    parents => ['DBI'],
-   dsn_options => {
+   unconnected_options => {
       concat_sql => '? || ?',
       random_func => 'RANDOM()',
    })
@@ -240,19 +242,19 @@ Takes a hashref L<< defining a new driver | DRIVER DEFINITION >>.
 Takes a hashref L<< defining a new driver | DRIVER DEFINITION >>.  Replaces
 the driver already defined with the same name.
 
-=head2 C<decorate_driver_dbh>
+=head2 C<decorate_driver_connected>
 
- $dbii->decorate_driver_dbh('MSSQL', 'concat_sql', '? + ?')
-
-Takes a C<driver name>, C<key> and a C<value>.  The C<key value> pair will
-be inserted into the driver's C<dbh_options>.
-
-=head2 C<decorate_driver_dsn>
-
- $dbii->decorate_driver_dsn('SQLite', 'concat_sql', '? || ?')
+ $dbii->decorate_driverconnected('MSSQL', 'concat_sql', '? + ?')
 
 Takes a C<driver name>, C<key> and a C<value>.  The C<key value> pair will
-be inserted into the driver's C<dsn_options>.
+be inserted into the driver's C<connected_options>.
+
+=head2 C<decorate_driver_unconnected>
+
+ $dbii->decorate_driver_unconnected('SQLite', 'concat_sql', '? || ?')
+
+Takes a C<driver name>, C<key> and a C<value>.  The C<key value> pair will
+be inserted into the driver's C<unconnected_options>.
 
 =head2 C<get>
 
@@ -293,8 +295,8 @@ generally it will look something like this (from the tests):
    drivers => [ map DBIx::Introspector::Driver->new($_),
       {
          name => 'DBI',
-         dbh_determination_strategy => sub { $_[1]->{Driver}{Name} },
-         dsn_determination_strategy => sub {
+         connected_determination_strategy => sub { $_[1]->{Driver}{Name} },
+         unconnected_determination_strategy => sub {
             my $dsn = $_[1] || $ENV{DBI_DSN} || '';
             my ($driver) = $dsn =~ /dbi:([^:]+):/i;
             $driver ||= $ENV{DBI_DRIVER};
@@ -304,14 +306,14 @@ generally it will look something like this (from the tests):
       {
          name => 'SQLite',
          parents => ['DBI'],
-         dbh_determination_strategy => sub {
+         connected_determination_strategy => sub {
             my ($v) = $_[1]->selectrow_array('SELECT "value" FROM "a"');
             return "SQLite$v"
          },
-         dbh_options => {
+         connected_options => {
             bar => sub { 2 },
          },
-         dsn_options => {
+         unconnected_options => {
             borg => sub { 'magic ham' },
          },
       },
@@ -337,21 +339,22 @@ options among children.  So for example on might define a driver for each
 version of PostgreSQL, and have a parent driver that they all use for common
 base info.
 
-=head2 C<dbh_determination_strategy>
+=head2 C<connected_determination_strategy>
 
 This is a code reference that is called as a method on the driver with the
-C<dbh> as the first argument.  It should return a driver name.
+C<dbh> as the first argument and an optional C<dsn> as the second argument.
+It should return a driver name.
 
-=head2 C<dsn_determination_strategy>
+=head2 C<unconnected_determination_strategy>
 
 This is a code reference that is called as a method on the driver with the
 C<dsn> as the first argument.  It should return a driver name.
 
-=head2 C<dbh_options>
+=head2 C<connected_options>
 
 Hashref of C<< key value >> pairs for detecting information based on the
 C<dbh>.  A value that is not a code reference is returned directly, though
-I suggest non-coderefs all go in the L</dsn_options> so that they may be
+I suggest non-coderefs all go in the L</unconnected_options> so that they may be
 used without connecting if possilbe.
 
 If a code reference is passed it will get called as a method on the driver
@@ -367,13 +370,17 @@ This is the name of the value that the user requested.
 
 This is the connected C<dbh> that you can use to introspect the database.
 
+=item C<dsn>
+
+This is the C<dsn> passed to L</get>, possibly undefined.
+
 =item C<drivers_by_name>
 
 You shouldn't use this, it's for internals.
 
 =back
 
-=head2 C<dsn_options>
+=head2 C<unconnected_options>
 
 Hashref of C<< key value >> pairs for detecting information based on the
 C<dsn>.  A value that is not a code reference is returned directly.

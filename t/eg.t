@@ -8,10 +8,10 @@ use DBIx::Introspector;
 
 my $d = DBIx::Introspector->new( drivers => '2013.12' );
 
-$d->decorate_driver_dbh(MSSQL => concat_sql => sub { '%s + %s' });
+$d->decorate_driver_connected(MSSQL => concat_sql => sub { '%s + %s' });
 my $n = $d->_drivers_by_name;
 is(
-   $n->{'ODBC_Microsoft_SQL_Server'}->_get_via_dbh({
+   $n->{'ODBC_Microsoft_SQL_Server'}->_get_when_connected({
       drivers_by_name => $n,
       dbh => undef,
       key => 'concat_sql'
@@ -21,7 +21,7 @@ is(
 );
 
 is(
-   $d->_drivers_by_name->{'ADO_Microsoft_SQL_Server'}->_get_via_dbh({
+   $d->_drivers_by_name->{'ADO_Microsoft_SQL_Server'}->_get_when_connected({
       drivers_by_name => $n,
       dbh => undef,
       key => 'concat_sql'

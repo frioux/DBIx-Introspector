@@ -12,8 +12,8 @@ my $d = DBIx::Introspector->new(
    drivers => [ map DBIx::Introspector::Driver->new($_),
       {
          name => 'DBI',
-         dbh_determination_strategy => sub { $_[1]->{Driver}{Name} },
-         dsn_determination_strategy => sub {
+         connected_determination_strategy => sub { $_[1]->{Driver}{Name} },
+         unconnected_determination_strategy => sub {
             my $dsn = $_[1] || $ENV{DBI_DSN} || '';
             my ($driver) = $dsn =~ /dbi:([^:]+):/i;
             $driver ||= $ENV{DBI_DRIVER};
@@ -23,14 +23,14 @@ my $d = DBIx::Introspector->new(
       {
          name => 'SQLite',
          parents => ['DBI'],
-         dbh_determination_strategy => sub {
+         connected_determination_strategy => sub {
             my ($v) = $_[1]->selectrow_array('SELECT "value" FROM "a"');
             return "SQLite$v"
          },
-         dbh_options => {
+         connected_options => {
             bar => sub { 2 },
          },
-         dsn_options => {
+         unconnected_options => {
             borg => sub { 'magic ham' },
          },
       },
@@ -51,7 +51,7 @@ ok(exception { $d->get($dbh, 'dbi:SQLite::memory:', 'foo') }, 'unknown option di
 $d->replace_driver({
    name => 'SQLite1',
    parents => ['SQLite'],
-   dbh_options => {
+   connected_options => {
       foo => sub { 'bar' },
    },
 });

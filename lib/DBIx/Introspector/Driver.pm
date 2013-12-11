@@ -8,36 +8,36 @@ has name => (
    required => 1,
 );
 
-has _dbh_determination_strategy => (
+has _connected_determination_strategy => (
    is => 'ro',
    default => sub { sub { 1 } },
-   init_arg => 'dbh_determination_strategy',
+   init_arg => 'connected_determination_strategy',
 );
 
-has _dsn_determination_strategy => (
+has _unconnected_determination_strategy => (
    is => 'ro',
    default => sub { sub { 1 } },
-   init_arg => 'dsn_determination_strategy',
+   init_arg => 'unconnected_determination_strategy',
 );
 
-has _dbh_options => (
+has _connected_options => (
    is => 'ro',
    builder => sub {
       +{
          _introspector_driver => sub { $_[0]->name },
       }
    },
-   init_arg => 'dbh_options',
+   init_arg => 'connected_options',
 );
 
-has _dsn_options => (
+has _unconnected_options => (
    is => 'ro',
    builder => sub {
       +{
          _introspector_driver => sub { $_[0]->name },
       }
    },
-   init_arg => 'dsn_options',
+   init_arg => 'unconnected_options',
 );
 
 has _parents => (
@@ -46,36 +46,36 @@ has _parents => (
    init_arg => 'parents',
 );
 
-sub _add_dbh_option {
+sub _add_connected_option {
    my ($self, $key, $value) = @_;
 
-   $self->_dbh_options->{$key} = $value
+   $self->_connected_options->{$key} = $value
 }
 
-sub _add_dsn_option {
+sub _add_unconnected_option {
    my ($self, $key, $value) = @_;
 
-   $self->_dsn_options->{$key} = $value
+   $self->_unconnected_options->{$key} = $value
 }
 
 sub _determine {
    my ($self, $dbh, $dsn) = @_;
 
-   my $dbh_strategy = $self->_dbh_determination_strategy;
+   my $connected_strategy = $self->_connected_determination_strategy;
 
-   return $self->$dbh_strategy($dbh) if $dbh;
+   return $self->$connected_strategy($dbh, $dsn) if $dbh;
 
-   my $dsn_strategy = $self->_dsn_determination_strategy;
-   $self->$dsn_strategy($dsn)
+   my $unconnected_strategy = $self->_unconnected_determination_strategy;
+   $self->$unconnected_strategy($dsn)
 }
 
-sub _get_via_dsn {
+sub _get_when_unconnected {
    my ($self, $args) = @_;
 
    my $drivers_by_name = $args->{drivers_by_name};
    my $key = $args->{key};
 
-   my $option = $self->_dsn_options->{$key};
+   my $option = $self->_unconnected_options->{$key};
 
    if ($option) {
       return $option->($self, $args->{dbh})
@@ -87,20 +87,20 @@ sub _get_via_dsn {
       for my $parent (@p) {
          my $driver = $drivers_by_name->{$parent};
          die "no such driver <$parent>" unless $driver;
-         my $ret = $driver->_get_via_dsn($args);
+         my $ret = $driver->_get_when_unconnected($args);
          return $ret if defined $ret
       }
    }
    return undef
 }
 
-sub _get_via_dbh {
+sub _get_when_connected {
    my ($self, $args) = @_;
 
    my $drivers_by_name = $args->{drivers_by_name};
    my $key = $args->{key};
 
-   my $option = $self->_dbh_options->{$key};
+   my $option = $self->_connected_options->{$key};
 
    if ($option) {
       return $option->($self, $args->{dbh})
@@ -112,7 +112,7 @@ sub _get_via_dbh {
       for my $parent (@p) {
          my $driver = $drivers_by_name->{$parent};
          die "no such driver <$parent>" unless $driver;
-         my $ret = $driver->_get_via_dbh($args);
+         my $ret = $driver->_get_when_connected($args);
          return $ret if $ret
       }
    }
