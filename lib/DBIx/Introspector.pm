@@ -1,5 +1,7 @@
 package DBIx::Introspector;
 
+# ABSTRACT: Detect what database you are connected to
+
 use Moo;
 use DBIx::Introspector::Driver;
 
@@ -207,9 +209,10 @@ common way to connect to SQL Server, it is not the only option, as L<DBD::ADO>
 can also be used.
 
 C<DBIx::Introspector> can correctly detect which database you are connected to,
-because it was factor out of a complex, working codebase.  On top of that it has
-been written to be very extensible.  So if you needed to detect which version of
-your given database you are connected to that would not be difficult.
+because it was factored out of a complex, working codebase.  On top of
+that it has been written to be very extensible.  So if you needed to
+detect which version of your given database you are connected to that
+would not be difficult.
 
 Furthermore, C<DBIx::Introspector> does it's best to try to detect information
 based on the dsn you give it if you have not yet connected, so you can possibly
@@ -239,12 +242,12 @@ Takes a hashref L<< defining a new driver | DRIVER DEFINITION >>.
       random_func => 'RANDOM()',
    })
 
-Takes a hashref L<< defining a new driver | DRIVER DEFINITION >>.  Replaces
-the driver already defined with the same name.
+Takes a hashref L<< replacing an existing driver | DRIVER DEFINITION >>.
+Replaces the driver already defined with the same name.
 
 =head2 C<decorate_driver_connected>
 
- $dbii->decorate_driverconnected('MSSQL', 'concat_sql', '? + ?')
+ $dbii->decorate_driver_connected('MSSQL', 'concat_sql', '? + ?')
 
 Takes a C<driver name>, C<key> and a C<value>.  The C<key value> pair will
 be inserted into the driver's C<connected_options>.
@@ -266,7 +269,7 @@ The C<dbh> can be a coderef returning a C<dbh>.  If you provide the
 C<dbh_fallback_connect> option it will be used to connect the C<dbh> if it is
 not already connected and then queried, if the C<dsn> was insufficient.
 
-So for example, I might do:
+So for example, one might do:
 
  my $dbh;
  $dbii->get(sub { $dbh }, $dsn, 'concat_sql', {
@@ -282,10 +285,11 @@ driver to connect.
 
 This has no default and is required, though a sane defaultish value does exist.
 
-Currently there is one predefined set of drivers, named C<2013-12.01>.  If drivers
-or facts or just the general structure of drivers changes they will always be as
-a new named set of drivers.  C<2013-12.01> matches the 0.08250 release of
-L<DBIx::Class> and probably many previous and following releases.
+Currently there is one predefined set of drivers, named C<2013-12.01>.
+If drivers or facts or just the general structure of drivers changes they
+will always be as a new named set of drivers.  C<2013-12.01> matches
+the 0.08250 release of L<DBIx::Class> and probably many previous and
+following releases.
 
 If you need to define it from scratch, you can just pass an arrayref of drivers;
 see the L<DRIVER DEFINITION> section on what is required for that.  But
