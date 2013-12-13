@@ -362,13 +362,9 @@ I suggest non-coderefs all go in the L</unconnected_options> so that they may be
 used without connecting if possilbe.
 
 If a code reference is passed it will get called as a method on the driver
-with the following keys passed in a hash reference:
+with the following list of values:
 
 =over 2
-
-=item C<key>
-
-This is the name of the value that the user requested.
 
 =item C<dbh>
 
@@ -378,10 +374,6 @@ This is the connected C<dbh> that you can use to introspect the database.
 
 This is the C<dsn> passed to L</get>, possibly undefined.
 
-=item C<drivers_by_name>
-
-You shouldn't use this, it's for internals.
-
 =back
 
 =head2 C<unconnected_options>
@@ -390,21 +382,13 @@ Hashref of C<< key value >> pairs for detecting information based on the
 C<dsn>.  A value that is not a code reference is returned directly.
 
 If a code reference is passed it will get called as a method on the driver
-with the following keys passed in a hash reference:
+with the following list value:
 
 =over 2
-
-=item C<key>
-
-This is the name of the value that the user requested.
 
 =item C<dsn>
 
 This is the connected C<dsn> that you can use to introspect the database.
-
-=item C<drivers_by_name>
-
-You shouldn't use this, it's for internals.
 
 =back
 

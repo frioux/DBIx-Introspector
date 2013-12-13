@@ -103,7 +103,7 @@ sub _get_when_connected {
    my $option = $self->_connected_options->{$key};
 
    if ($option) {
-      return $option->($self, $args->{dbh})
+      return $option->($self, $args->{dbh}, $args->{dsn})
         if ref $option && ref $option eq 'CODE';
       return $option;
    }
