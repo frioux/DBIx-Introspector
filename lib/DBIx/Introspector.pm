@@ -160,6 +160,14 @@ sub get {
 sub _driver_for {
    my ($self, $dbh, $dsn) = @_;
 
+   if ($dbh and my $d = $dbh->{private_dbii_driver}) {
+      if (my $found = $self->_drivers_by_name->{$d}) {
+         return $found
+      } else {
+         warn "user requested non-existant driver $d"
+      }
+   }
+
    my $driver = $self->_root_driver;
    my $done;
 

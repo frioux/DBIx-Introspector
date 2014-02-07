@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+ - Add method to override driver selection, eg for testing
 
 0.001000
  - Initial Release
