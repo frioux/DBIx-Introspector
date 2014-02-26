@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.001001  2014-02-25 21:11:58-06:00 America/Chicago
  - Add method to override driver selection, eg for testing
 
 0.001000
