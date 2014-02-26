@@ -1,4 +1,8 @@
-=head1 DBIx::Introspector - Shake those gifts and figure out what's inside!
+=head1 NAME
+
+DBIx::Introspector - Shake those gifts and figure out what's inside!
+
+=head1 TEXT
 
 A common (but rarely acknowledged) problem when writing portable SQL is
 accurately detecting what kind of database you are connected to, and
