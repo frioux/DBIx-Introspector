@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+ - fix missing version numbers
  - fix Advent pod (thanks for the issue oalders!)
 
 0.001001  2014-02-25 21:11:58-06:00 America/Chicago
