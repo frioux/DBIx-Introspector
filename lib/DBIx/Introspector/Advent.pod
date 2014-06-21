@@ -1,6 +1,8 @@
-=head1 NAME
+# PODNAME: DBIx::Introspector::Advent
 
-DBIx::Introspector - Shake those gifts and figure out what's inside!
+# ABSTRACT: Original Announcement of ::ResultSet::DateMethods1
+
+=head1 Content
 
 =head1 TEXT
 

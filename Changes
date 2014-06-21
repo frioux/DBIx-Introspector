@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+ - Fix ::Announcement POD which was shadowing the real docs
 
 0.001002  2014-02-28 07:30:00CST-0600 America/Chicago
  - fix missing version numbers
