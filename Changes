@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+ - Fix bug that disallowed false values
 
 0.001003  2014-06-21 09:47:56-05:00 America/Chicago
  - Fix ::Announcement POD which was shadowing the real docs

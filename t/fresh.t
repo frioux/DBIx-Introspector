@@ -34,8 +34,16 @@ my $d = DBIx::Introspector->new(
             borg => sub { 'magic ham' },
          },
       },
-      { name => 'SQLite1', parents => ['SQLite'] },
-      { name => 'SQLite2', parents => ['SQLite'] },
+      {
+         name => 'SQLite1',
+         parents => ['SQLite'],
+         unconnected_options => { a => 1 },
+      },
+      {
+         name => 'SQLite2',
+         parents => ['SQLite'],
+         unconnected_options => { a => 0 },
+      },
    ]
 );
 
@@ -47,6 +55,7 @@ $dbh->do($_) for (
    'INSERT INTO "a" ("value") VALUES (1)',
 );
 is($d->get($dbh, 'dbi:SQLite::memory:', '_introspector_driver'), 'SQLite1');
+is($d->get($dbh, 'dbi:SQLite::memory:', 'a'), 1, 'true bool');
 ok(exception { $d->get($dbh, 'dbi:SQLite::memory:', 'foo') }, 'unknown option dies');;
 $d->replace_driver({
    name => 'SQLite1',
@@ -58,6 +67,7 @@ $d->replace_driver({
 is($d->get($dbh, 'dbi:SQLite::memory:', 'foo'), 'bar');
 $dbh->do('UPDATE "a" SET "value" = 2');
 is($d->get($dbh, 'dbi:SQLite::memory:', '_introspector_driver'), 'SQLite2');
+is($d->get($dbh, 'dbi:SQLite::memory:', 'a'), 0, 'false bool');
 is($d->get($dbh, 'dbi:SQLite::memory:', 'bar'), 2, 'oo dispatch');
 
 is($d->get($dbh, 'dbi:SQLite::memory:', 'borg'), 'magic ham', 'working $dbh still dispatches to dsn');

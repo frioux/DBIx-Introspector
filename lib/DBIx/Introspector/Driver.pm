@@ -75,9 +75,9 @@ sub _get_when_unconnected {
    my $drivers_by_name = $args->{drivers_by_name};
    my $key = $args->{key};
 
-   my $option = $self->_unconnected_options->{$key};
+   if (exists $self->_unconnected_options->{$key}) {
+      my $option = $self->_unconnected_options->{$key};
 
-   if ($option) {
       return $option->($self, $args->{dbh})
         if ref $option && ref $option eq 'CODE';
       return $option;
@@ -100,9 +100,9 @@ sub _get_when_connected {
    my $drivers_by_name = $args->{drivers_by_name};
    my $key = $args->{key};
 
-   my $option = $self->_connected_options->{$key};
+   if (exists $self->_connected_options->{$key}) {
+      my $option = $self->_connected_options->{$key};
 
-   if ($option) {
       return $option->($self, $args->{dbh}, $args->{dsn})
         if ref $option && ref $option eq 'CODE';
       return $option;
