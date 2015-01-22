@@ -154,7 +154,7 @@ sub get {
          })
    }
 
-   die "wtf"
+   die "missing key: $key"
 }
 
 sub _driver_for {
