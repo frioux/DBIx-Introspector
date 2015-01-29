@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.001005  2015-01-29 17:47:49-06:00 America/Chicago
  - Fix error message for missing values (Thanks Wes Malone!)
 
 0.001004  2014-11-30 21:50:34-06:00 America/Chicago
